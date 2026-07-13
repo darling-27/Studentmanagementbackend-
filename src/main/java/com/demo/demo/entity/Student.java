@@ -33,7 +33,7 @@ public class Student extends Auditable {
 
     // Link to the login account of this student.
     // user_id may be null temporarily during student deletion so the auth account is preserved.
-    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
+    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.REFRESH})
     @JoinColumn(name = "user_id", unique = true)
     private User user;
 
