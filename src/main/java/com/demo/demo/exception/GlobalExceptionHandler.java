@@ -6,11 +6,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -62,6 +64,22 @@ public class GlobalExceptionHandler {
                                                             HttpServletRequest req) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(build(HttpStatus.UNAUTHORIZED, "Invalid username or password", req, null));
+    }
+
+    @ExceptionHandler(InternalAuthenticationServiceException.class)
+    public ResponseEntity<ErrorResponse> handleInternalAuth(InternalAuthenticationServiceException ex,
+                                                            HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(build(HttpStatus.UNAUTHORIZED, "Authentication failed: " + ex.getMessage(), req, null));
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErrorResponse> handleResponseStatus(ResponseStatusException ex,
+                                                              HttpServletRequest req) {
+        HttpStatus status = (HttpStatus) ex.getStatusCode();
+        String reason = ex.getReason() != null ? ex.getReason() : status.getReasonPhrase();
+        return ResponseEntity.status(status)
+                .body(build(status, reason, req, null));
     }
 
     @ExceptionHandler(AccessDeniedException.class)

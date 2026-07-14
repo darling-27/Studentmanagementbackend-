@@ -1,11 +1,13 @@
 package com.demo.demo.security;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -76,7 +78,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         } catch (BadCredentialsException | org.springframework.security.core.userdetails.UsernameNotFoundException ex) {
             log.warn("Authentication failed for uri={}: {}", requestUri, ex.getMessage());
-            // leave context unauthenticated, let security rules reject
+            SecurityContextHolder.clearContext();
+        } catch (MalformedJwtException |
+                 ExpiredJwtException |
+                 UnsupportedJwtException |
+                 SignatureException |
+                 IllegalArgumentException ex) {
+            log.warn("Invalid JWT for uri={}: {}", requestUri, ex.getMessage());
+            SecurityContextHolder.clearContext();
         } catch (Exception ex) {
             log.error("Unexpected error in JwtAuthenticationFilter for uri={}", requestUri, ex);
             throw ex;

@@ -61,6 +61,9 @@ public class StudentServiceImpl implements StudentService {
         Role studentRole = roleRepository.findByName(RoleName.ROLE_STUDENT)
                 .orElseThrow(() -> new ResourceNotFoundException("Role STUDENT not found"));
 
+        // Persist the User first — the @OneToOne cascade on Student.user is MERGE+REFRESH
+        // (not PERSIST), so a brand-new User must be saved explicitly before the Student
+        // can reference it, otherwise Hibernate throws TransientPropertyValueException.
         User user = User.builder()
                 .username(r.username())
                 .email(r.email())
@@ -68,13 +71,14 @@ public class StudentServiceImpl implements StudentService {
                 .enabled(true)
                 .roles(Set.of(studentRole))
                 .build();
+        User savedUser = userRepository.save(user);
 
         Student student = Student.builder()
                 .fullName(r.fullName())
                 .rollNo(r.rollNo())
                 .course(r.course())
                 .phone(r.phone())
-                .user(user)
+                .user(savedUser)
                 .build();
 
         return StudentMapper.toResponse(studentRepository.save(student));
